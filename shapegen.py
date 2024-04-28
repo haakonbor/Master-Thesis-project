@@ -361,7 +361,7 @@ def create_shape(x, z, index, shape_instance):
     # Collection properties
     collection.name = f"Shape_{index + 1}_collection"
     collection.shape_generator_properties.random_seed = shape_instance.features[Features.SEED]
-    collection.shape_generator_properties.amount = 0    # trick to speed up shape generation
+    collection.shape_generator_properties.amount = 0    # optimization to speed up shape generation
     collection.shape_generator_properties.mirror_x = shape_instance.features[Features.MIRROR_X] == 1
     collection.shape_generator_properties.mirror_y = shape_instance.features[Features.MIRROR_Y] == 1
     collection.shape_generator_properties.mirror_z = shape_instance.features[Features.MIRROR_Z] == 1
@@ -376,7 +376,7 @@ def create_shape(x, z, index, shape_instance):
     collection.shape_generator_properties.max_rotation = shape_instance.features[Features.ROTATION_MAX]
     collection.shape_generator_properties.favour_vec = [shape_instance.features[Features.FAVOUR_X], shape_instance.features[Features.FAVOUR_Y], shape_instance.features[Features.FAVOUR_Z]]
     collection.shape_generator_properties.scale = [shape_instance.features[Features.SCALING_X], shape_instance.features[Features.SCALING_Y], shape_instance.features[Features.SCALING_Z]]
-    collection.shape_generator_properties.amount = shape_instance.features[Features.EXTRUSIONS] # trick to speed up shape generation
+    collection.shape_generator_properties.amount = shape_instance.features[Features.EXTRUSIONS] # optimization cont.
         
     collection.shape_generator_properties.show_seed_panel = True
     collection.shape_generator_properties.show_extrude_panel = True
