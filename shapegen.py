@@ -59,8 +59,10 @@ max_boundaries = [Features.EXTRUDE_MAX, Features.TAPER_MAX, Features.ROTATION_MA
 """ --------------------------------------------------------- """
 """ ---------------------- SYSTEM PARAMETERS ---------------- """
 """ --------------------------------------------------------- """
+
 grid_size = 4
 spacing = 6
+padding = (grid_size/2 - 0.5) *spacing
 
 random.seed(0)
 
@@ -263,9 +265,9 @@ def get_random_feature_value(i, min=None, max=None):
 """ --------------------------------------------------- """ 
 
 def convergence(treshold = 50):
-    top_16_avg_fitness = average_fitness(current_population[:grid_size*grid_size])
-    print("TOP 16 AVERAGE FITNESS:", top_16_avg_fitness)
-    if top_16_avg_fitness > treshold:
+    top_avg_fitness = average_fitness(current_population[:grid_size*grid_size])
+    print(f"TOP {grid_size*grid_size} AVERAGE FITNESS: {top_avg_fitness}")
+    if top_avg_fitness > treshold:
         return True
     else:
         return False
@@ -336,9 +338,9 @@ def create_label(x, z, index):
     # Check if the label already exists
     if label_name in bpy.data.objects:
         label = bpy.data.objects[label_name]
-        label.location = (x - label_size * 2 - 1.5*spacing, -2, z - 2 + 1.5*spacing)
+        label.location = (x - label_size * 2 - padding, -2, z - 2 + padding)
     else:
-        bpy.ops.object.text_add(location=(x - label_size * 2 - 1.5*spacing, -2, z - 2 + 1.5*spacing))
+        bpy.ops.object.text_add(location=(x - label_size * 2 - padding, -2, z - 2 + padding))
         label = bpy.context.active_object
         label.rotation_euler = (1.5708, 0, 0)  # Rotate 90 degrees along the X-axis
         label.name = label_name
@@ -386,8 +388,10 @@ def create_shape(x, z, index, shape_instance):
     # Shape properties
     shape = bpy.context.active_object
     shape.name = shape_name
-    shape.location = (x - 1.5*spacing, 0, z + 1.5*spacing)
+    shape.location = (x - padding, 0, z + padding)
     shape["liked"] = 0
+    shape["index"] = index
+    shape["fitness"] = round(shape_instance.evaluate_fitness(), 1)
     
     # Shape material
     shape.data.materials.append(bpy.data.materials.new(name=f"Color_{index + 1}"))
@@ -464,6 +468,8 @@ def save_shapes(filename):
 def load_shapes(filename):
     global rated_shapes
 
+    print("LOAD FILENAME:", filename)
+
     blend_file_directory = os.path.dirname(bpy.data.filepath)  # Get the directory of the Blender file
     file_path = os.path.join(blend_file_directory, filename)
     
@@ -494,6 +500,8 @@ def clear_scene():
         
     for collection in bpy.data.collections:
         bpy.data.collections.remove(collection)
+
+        
         
 
 """ ------------------------------------------------------- """
@@ -516,7 +524,6 @@ class OBJECT_OT_LikeOperator(bpy.types.Operator):
             self.report({'INFO'}, f"{obj_name} liked!")
 
         return {'FINISHED'}
- 
     
 # Operator to handle the dislike button click
 class OBJECT_OT_DislikeOperator(bpy.types.Operator):
@@ -535,6 +542,20 @@ class OBJECT_OT_DislikeOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
+
+def add_shapegen_text_to_object_context_menu(self, context):
+    layout = self.layout
+    layout.label(text=f'-- GA MODEL GENERATOR --')
+
+def add_like_to_object_context_menu(self, context):
+    self.layout.operator("object.like_operator", text=f"Like").index = context.object["index"]
+
+def add_dislike_to_object_context_menu(self, context):
+    self.layout.operator("object.dislike_operator", text=f"Dislike").index = context.object["index"]
+
+def add_expected_fitness_to_object_context_menu(self, context):
+    layout = self.layout
+    layout.label(text=f'Expected Fitness: {context.object["fitness"]}')
 
 # Operator to generate a new set of 16 random primitive models with random colors
 class OBJECT_OT_GenerateSetOperator(bpy.types.Operator):
@@ -618,19 +639,19 @@ class OBJECT_OT_SaveRatingsOperator(bpy.types.Operator):
     bl_idname = "object.save_ratings_operator"
     bl_label = "Save Ratings"
     
-    filename: bpy.props.StringProperty(
-        name="Ratings filename",
-        description="Enter the JSON filename",
-        maxlen=1024,
-        default=default_filename,
+    filepath: bpy.props.StringProperty(
+        name="Ratings file path",
+        description="Enter the JSON file path",
+        subtype='FILE_PATH'
     ) # type: ignore
 
     def execute(self, context):
-        save_shapes(self.filename)
+        save_shapes(self.filepath)
         return {'FINISHED'}
     
     def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
 
 # Custom Operator to load ratings
@@ -640,15 +661,14 @@ class OBJECT_OT_LoadRatingsOperator(bpy.types.Operator):
     bl_idname = "object.load_ratings_operator"
     bl_label = "Load Ratings"
     
-    filename: bpy.props.StringProperty(
-        name="Ratings filename",
-        description="Enter the JSON filename",
-        maxlen=1024,
-        default=default_filename,
+    filepath: bpy.props.StringProperty(
+        name="Ratings file path",
+        description="Enter the JSON file path",
+        subtype='FILE_PATH'
     ) # type: ignore
 
     def execute(self, context):
-        load_shapes(self.filename)
+        load_shapes(self.filepath)
         return {'FINISHED'}
     
     def invoke(self, context, event):
@@ -666,7 +686,7 @@ class OBJECT_OT_RunGenerationsOperator(bpy.types.Operator):
         default=50,
         min=10,
         max=95,
-        description="Enter convergence requirement in the form of a fitness treshold for the average fitness of the top 16 shapes"
+        description=f"Enter convergence requirement in the form of a fitness treshold for the average fitness of the top {grid_size*grid_size} shapes"
         ) # type: ignore
         
     max_generations: bpy.props.IntProperty(
@@ -674,7 +694,7 @@ class OBJECT_OT_RunGenerationsOperator(bpy.types.Operator):
         default=100,
         min=10,
         max=1000,
-        description="Enter the maximum of generations that are generated to try to achieve convergence"
+        description="Enter the maximum number of generations that are generated to try to achieve convergence"
         ) # type: ignore
 
     def execute(self, context):
@@ -719,6 +739,9 @@ class OBJECT_PT_GAgeneratorPanel(bpy.types.Panel):
         
         layout.separator()
         
+        # Text showing the average fitness of the shapes shown in the viewport
+        layout.label(text=f'Avg fitness of top {grid_size * grid_size} shapes: {round(average_fitness(current_population[:grid_size*grid_size]), 1)}')
+        
         # Button to generate a new set
         layout.operator("object.generate_set_operator", text="Generate New Set")
         
@@ -747,6 +770,11 @@ def register():
     bpy.utils.register_class(OBJECT_OT_RunGenerationsOperator)
     bpy.utils.register_class(OBJECT_PT_GAgeneratorPanel)
 
+    bpy.types.VIEW3D_MT_object_context_menu.append(add_shapegen_text_to_object_context_menu)
+    bpy.types.VIEW3D_MT_object_context_menu.append(add_like_to_object_context_menu)
+    bpy.types.VIEW3D_MT_object_context_menu.append(add_dislike_to_object_context_menu)
+    bpy.types.VIEW3D_MT_object_context_menu.append(add_expected_fitness_to_object_context_menu)
+
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_LikeOperator)
@@ -759,7 +787,6 @@ def unregister():
     bpy.utils.unregister_class(OBJECT_OT_LoadRatingsOperator)
     bpy.utils.unregister_class(OBJECT_OT_RunGenerationsOperator)
     bpy.utils.unregister_class(OBJECT_PT_GAgeneratorPanel)
-
 
 
 if __name__ == "__main__":
