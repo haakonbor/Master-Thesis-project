@@ -39,10 +39,10 @@ boundaries[Features.MIRROR_Y] = { "min": 0, "max": 2 }
 boundaries[Features.MIRROR_Z] = { "min": 0, "max": 2 }
 boundaries[Features.SUBDIVIDE] = { "min": 0, "max": 2 }
 boundaries[Features.BEVEL] = { "min": 0, "max": 2 }
-boundaries[Features.EXTRUDE_MIN] = { "min": 0.3, "max": 1.0 }
-boundaries[Features.EXTRUDE_MAX] = { "min": 0.3, "max": 1.0 }
-boundaries[Features.TAPER_MIN] = { "min": 0.3, "max": 1.0 }
-boundaries[Features.TAPER_MAX] = { "min": 0.3, "max": 1.0 }
+boundaries[Features.EXTRUDE_MIN] = { "min": 0.5, "max": 1.0 }
+boundaries[Features.EXTRUDE_MAX] = { "min": 0.5, "max": 1.0 }
+boundaries[Features.TAPER_MIN] = { "min": 0.5, "max": 1.0 }
+boundaries[Features.TAPER_MAX] = { "min": 0.5, "max": 1.0 }
 boundaries[Features.ROTATION_MIN] = { "min": -45.0, "max": 45.0 }
 boundaries[Features.ROTATION_MAX] = { "min": -45.0, "max": 45.0 }
 boundaries[Features.FAVOUR_X] = { "min": 0.0, "max": 1.0 }
@@ -75,7 +75,7 @@ rated_shapes = []
 
 default_filename = "rated_shapes.json"
 
-k = 15
+k = 10
 weighted_knn = True
 
 current_generation = 1
