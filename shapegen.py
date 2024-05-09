@@ -59,12 +59,11 @@ max_boundaries = [Features.EXTRUDE_MAX, Features.TAPER_MAX, Features.ROTATION_MA
 """ --------------------------------------------------------- """
 """ ---------------------- SYSTEM PARAMETERS ---------------- """
 """ --------------------------------------------------------- """
+random.seed(0)
 
 grid_size = 4
 spacing = 6
 padding = (grid_size/2 - 0.5) *spacing
-
-random.seed(0)
 
 population_size = 200
 crossover_rate = 0.9
@@ -168,13 +167,11 @@ class Shape:
                     else:
                         print("UNRATED SHAPE FOUND IN RATED SHAPES LIST!") 
             
-            # Predict fitness from K-NN classification
+            # Predict fitness from K-NN regression
             predicted_fitness = 100 * liked_sum / (liked_sum + disliked_sum) + 1 * disliked_sum / (liked_sum + disliked_sum)
             self.fitness = predicted_fitness
             return predicted_fitness
         else:
-            #relative_size = sum(self.features[-3:]) / 3
-            #return 100 * relative_size
             return 50
         
     def get_distance_to_shape(self, shape):
@@ -196,8 +193,12 @@ def roulette_select_parent(shapes):
     return shapes[parent_index]
 
 def crossover(parent1, parent2):
-    child1 = Shape()
-    child2 = Shape()
+    child1 = copy.deepcopy(parent1)
+    child1.liked = 0
+    child1.fitness = None
+    child2 = copy.deepcopy(parent2)
+    child2.liked = 0
+    child2.fitness = None
     
     if random.random() < crossover_rate:
         cross_point = random.randint(1, len(parent1.features) - 2)
@@ -513,7 +514,7 @@ class OBJECT_OT_LikeOperator(bpy.types.Operator):
     bl_idname = "object.like_operator"
     bl_label = "Like"
 
-    index: bpy.props.IntProperty()
+    index: bpy.props.IntProperty() # type: ignore
 
     def execute(self, context):
         obj_name = f"Shape_{self.index}"
@@ -530,7 +531,7 @@ class OBJECT_OT_DislikeOperator(bpy.types.Operator):
     bl_idname = "object.dislike_operator"
     bl_label = "Dislike"
 
-    index: bpy.props.IntProperty()
+    index: bpy.props.IntProperty() # type: ignore
 
     def execute(self, context):
         obj_name = f"Shape_{self.index}"
@@ -541,21 +542,6 @@ class OBJECT_OT_DislikeOperator(bpy.types.Operator):
             self.report({'INFO'}, f"{obj_name} disliked!")
 
         return {'FINISHED'}
-
-
-def add_shapegen_text_to_object_context_menu(self, context):
-    layout = self.layout
-    layout.label(text=f'-- GA MODEL GENERATOR --')
-
-def add_like_to_object_context_menu(self, context):
-    self.layout.operator("object.like_operator", text=f"Like").index = context.object["index"]
-
-def add_dislike_to_object_context_menu(self, context):
-    self.layout.operator("object.dislike_operator", text=f"Dislike").index = context.object["index"]
-
-def add_expected_fitness_to_object_context_menu(self, context):
-    layout = self.layout
-    layout.label(text=f'Expected Fitness: {context.object["fitness"]}')
 
 # Operator to generate a new set of 16 random primitive models with random colors
 class OBJECT_OT_GenerateSetOperator(bpy.types.Operator):
@@ -629,7 +615,6 @@ class OBJECT_OT_ResetAllOperator(bpy.types.Operator):
             elif operator.bl_idname == "object.dislike_operator":
                 operator.depress = False
                 
-        #bpy.context.area.tag_redraw()
         self.report({'INFO'}, "All shapes reset!")
         return {'FINISHED'}
     
@@ -756,6 +741,22 @@ class OBJECT_PT_GAgeneratorPanel(bpy.types.Panel):
         # Button to load ratings
         layout.operator("object.load_ratings_operator", text="Load Ratings")
         
+
+# Functions to add functionality to the Object Context Menu
+def add_shapegen_text_to_object_context_menu(self, context):
+    layout = self.layout
+    layout.label(text=f'-- GA MODEL GENERATOR --')
+
+def add_like_to_object_context_menu(self, context):
+    self.layout.operator("object.like_operator", text=f"Like").index = context.object["index"]
+
+def add_dislike_to_object_context_menu(self, context):
+    self.layout.operator("object.dislike_operator", text=f"Dislike").index = context.object["index"]
+
+def add_expected_fitness_to_object_context_menu(self, context):
+    layout = self.layout
+    layout.label(text=f'Expected Fitness: {context.object["fitness"]}')
+
 
 # Register the operators and panel
 def register():
