@@ -59,7 +59,7 @@ max_boundaries = [Features.EXTRUDE_MAX, Features.TAPER_MAX, Features.ROTATION_MA
 """ --------------------------------------------------------- """
 """ ---------------------- SYSTEM PARAMETERS ---------------- """
 """ --------------------------------------------------------- """
-random.seed(0)
+random.seed(1)
 
 grid_size = 4
 spacing = 6
@@ -748,10 +748,10 @@ def add_shapegen_text_to_object_context_menu(self, context):
     layout.label(text=f'-- GA MODEL GENERATOR --')
 
 def add_like_to_object_context_menu(self, context):
-    self.layout.operator("object.like_operator", text=f"Like").index = context.object["index"]
+    self.layout.operator("object.like_operator", text=f"Like").index = context.object["index"] + 1
 
 def add_dislike_to_object_context_menu(self, context):
-    self.layout.operator("object.dislike_operator", text=f"Dislike").index = context.object["index"]
+    self.layout.operator("object.dislike_operator", text=f"Dislike").index = context.object["index"] + 1
 
 def add_expected_fitness_to_object_context_menu(self, context):
     layout = self.layout
