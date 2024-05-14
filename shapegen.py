@@ -4,6 +4,7 @@ from enum import IntEnum
 import copy
 import json
 import os
+from datetime import datetime
 
 """ --------------------------------------------------------- """
 """ ---------------------- ENCODING ------------------------- """
@@ -59,7 +60,7 @@ max_boundaries = [Features.EXTRUDE_MAX, Features.TAPER_MAX, Features.ROTATION_MA
 """ --------------------------------------------------------- """
 """ ---------------------- SYSTEM PARAMETERS ---------------- """
 """ --------------------------------------------------------- """
-random.seed(1)
+random.seed(int(datetime.now().timestamp()))
 
 grid_size = 4
 spacing = 6
