@@ -60,7 +60,7 @@ max_boundaries = [Features.EXTRUDE_MAX, Features.TAPER_MAX, Features.ROTATION_MA
 """ --------------------------------------------------------- """
 """ ---------------------- SYSTEM PARAMETERS ---------------- """
 """ --------------------------------------------------------- """
-random.seed(int(datetime.now().timestamp()))
+random.seed(int(datetime.now().timestamp()))    # change to a specific number to get reproducable results
 
 grid_size = 4
 spacing = 6
